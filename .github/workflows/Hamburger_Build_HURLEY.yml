@@ -1,4 +1,4 @@
-name: Hamburger Linux Build
+name: Hamburger Arch Linux Build
 
 env:
   PLUG: Hamburger
@@ -12,7 +12,7 @@ on:
     paths:
       - '*'
     branches:
-      - master
+      - hurley_arch_runner
 
 jobs:
   build:
