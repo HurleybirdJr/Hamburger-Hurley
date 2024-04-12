@@ -10,7 +10,7 @@ depends=()
 makedepends=("git" "gcc")
 # install=
 # source=("$pkgname-$pkgver.tar.gz") - USE FOR BINARY
-source=("https://github.com/HurleybirdJr/Hamburger-Hurley.git")
+source=("git+https://github.com/HurleybirdJr/Hamburger-Hurley.git")
 sha256sums=("SKIP")
 
 pkgver() {
