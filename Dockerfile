@@ -1,15 +1,21 @@
 FROM archlinux
 
+
+
 RUN pacman -Sy --noconfirm base-devel git
 
-RUN useradd builduser -m \
-  && passwd -d builduser \
-  && cd /home/builduser \
-  && git clone "https://github.com/HurleybirdJr/Hamburger-Hurley.git" hamburger \
-  && chown builduser -R hamburger \
-  && (printf 'builduser ALL=(ALL) ALL\n' | tee -a /etc/sudoers) \
-  && sudo -u builduser bash -c 'cd ~/hamburger && makepkg -si --noconfirm' \
-  && pacman -Rns $(pacman -Qtdq)
+RUN useradd builduser -m
+RUN passwd -d builduser
+
+RUN mkdir /home/builduser/hamburger
+COPY PKGBUILD /home/builduser/hamburger
+
+RUN chown builduser -R /home/builduser/hamburger
+
+RUN sudo -u builduser bash -c "cd /home/builduser/hamburger && makepkg --noconfirm"
+RUN pacman -Rns $(pacman -Qtdq)
+
+
 
 WORKDIR /home/builduser
 

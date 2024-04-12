@@ -13,10 +13,10 @@ makedepends=("git" "gcc")
 source=("git+https://github.com/HurleybirdJr/Hamburger-Hurley.git")
 sha256sums=("SKIP")
 
-pkgver() {
-  cd "$pkgname"
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
-}
+#pkgver() {
+#  cd "$pkgname"
+#  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+#}
 
 build() {
 	cd "$pkgname"
