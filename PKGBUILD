@@ -1,42 +1,30 @@
 # Maintainer: Will Hurley <will@hurleybirdjr.com>
-pkgname="hamburger"
-pkgver="r202.fef77ab"
+pkgname="hamburger-git"
+pkgver="r203.a4bd424"
 pkgrel=1
 pkgdesc="A distortion and dynamics plugin designed for sonic destruction and tasteful saturation."
 arch=("x86_64")
 url="https://aviaryaudio.com/plugins/hamburgerv2"
 license=('GPLv3')
 depends=()
-makedepends=("git", "gcc")
-options=()
+makedepends=("git" "gcc")
 # install=
-source=("$pkgname-$pkgver.tar.gz"
-        "$pkgname-$pkgver.patch")
-source=("Hamburger::git://github.com/Davit-G/Hamburger.git")
+# source=("$pkgname-$pkgver.tar.gz") - USE FOR BINARY
+source=("Hamburger-Hurley::https://github.com/HurleybirdJr/Hamburger-Hurley.git")
 sha256sums=("SKIP")
 
 pkgver() {
-	cd "$pkgname"
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
-
-prepare() {
-	cd "$pkgname-$pkgver"
-	patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
+  cd "$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
 }
 
 build() {
-	cd "$pkgname-$pkgver"
-	./configure --prefix=/usr
+	cd "$pkgname"
 	make
 }
 
-check() {
-	cd "$pkgname-$pkgver"
-	make -k check
-}
-
 package() {
-	cd "$pkgname-$pkgver"
-	make DESTDIR="$pkgdir/" install
+	cd "$pkgname"
+	install -Dm755 ./Hamburger "$pkgdir/usr/bin/hamburger"
+	install -Dm644 ./README.md "$pkgdir/usr/share/doc/$pkgname"
 }
