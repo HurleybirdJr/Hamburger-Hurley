@@ -1,5 +1,5 @@
 # Maintainer: Will Hurley <will@hurleybirdjr.com>
-pkgname="hamburger-git"
+pkgname="hamburger-hurley"
 pkgver="r203.a4bd424"
 pkgrel=1
 pkgdesc="A distortion and dynamics plugin designed for sonic destruction and tasteful saturation."
@@ -10,7 +10,7 @@ depends=()
 makedepends=("git" "gcc")
 # install=
 # source=("$pkgname-$pkgver.tar.gz") - USE FOR BINARY
-source=("git+https://github.com/HurleybirdJr/Hamburger-Hurley.git")
+source=("git+https://github.com/HurleybirdJr/hamburger-hurley.git")
 sha256sums=("SKIP")
 
 #pkgver() {
