@@ -10,7 +10,7 @@ depends=()
 makedepends=("base-devel" "git" "cmake" "libx11" "libxrandr" "libxcursor" "libxinerama" "alsa-lib" "freetype2")
 # install=
 # source=("$pkgname-$pkgver.tar.gz") - USE FOR BINARY
-source=("git+https://github.com/HurleybirdJr/hamburger-hurley.git")
+source=("git+https://github.com/HurleybirdJr/hamburger-hurley.git#hurley_arch_runner")
 sha256sums=("SKIP")
 
 #pkgver() {

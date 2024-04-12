@@ -1,6 +1,7 @@
 build
 cmake-build
 cmake-build-debug
+cmake-build-release
 .vscode
 .idea
 .DS_Store
@@ -12,3 +13,4 @@ JUCE
 build_mac
 build_windows
 build_linux
+
