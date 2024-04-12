@@ -1,4 +1,4 @@
-# Hamburger Plugin CMakeLists.txt 
+# Hamburger Plugin CMakeLists.txt
 
 
 include (FetchContent)
