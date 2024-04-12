@@ -20,7 +20,9 @@ sha256sums=("SKIP")
 
 build() {
 	cd "$pkgname"
-	make
+	cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
+	cmake --build "build_linux" --config Release --target Hamburger_VST3 -j
+  cmake --build "build_linux" --config Release --target Hamburger_CLAP -j
 }
 
 package() {
