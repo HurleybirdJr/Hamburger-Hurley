@@ -104,7 +104,7 @@ public:
         }
         case 3:
         {// rubidium distortion
-            TRACE_EVENT("dsp", "rubidium");
+            // TRACE_EVENT("dsp", "rubidium");
             rubidium->processBlock(block);
         }
         }

@@ -44,7 +44,7 @@ jobs:
     - name: (unix linux) configure
       id: configure
       run: |
-        cmake -B "build_linux" -G Ninja -DCMAKE_BUILD_TYPE:STRING=Release
+        cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
 
     - name: build
       id: build

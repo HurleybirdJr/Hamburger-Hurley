@@ -23,16 +23,18 @@ build() {
 	echo "$pkgdir"
 	echo "$srcdir"
 	cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
-	cmake --build "build_linux" --config Release --target Hamburger_VST3 -j1
-  cmake --build "build_linux" --config Release --target Hamburger_CLAP -j1
-  cmake --build "build_linux" --config Release --target Hamburger_Standalone -j1
+	# cmake --build "build_linux" --config Release --target Hamburger_VST3 ---parallel $(($(nproc) - 1))
+	cmake --build "build_linux" --config Release --target Hamburger_CLAP --parallel $(($(nproc) - 1))
+  # cmake --build "build_linux" --config Release --target Hamburger_Standalone --parallel $(($(nproc) - 1))
 }
 
 package() {
 	cd "$pkgname"
-	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/VST3/Hamburger.vst3" "/home/$USER/.vst3/Hamburger.vst3" && chmod 755 "/home/$USER/.vst3/Hamburger.vst3"
-	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/CLAP/Hamburger.clap" "/home/$USER/.clap" && chmod 755 "/home/$USER/.clap/Hamburger.clap"
-	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/Standalone/Hamburger" "/usr/bin" && chmod 644 "/usr/bin/Hamburger"
-	mv "$srcdir/hamburger-hurley/LICENSE.md" "/usr/share/licenses/$pkgname/LICENSE" && chmod 644 "/usr/share/licenses/$pkgname/LICENSE"
-	mv "$srcdir/hamburger-hurley/README.md" "/usr/share/doc/$pkgname" && chmod 644 "/usr/share/doc/$pkgname"
+	# mkdir -p "/home/$USER/.vst3/Hamburger.vst3" || cp "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/VST3/Hamburger.vst3" "/home/$USER/.vst3/Hamburger.vst3" && chmod 755 "/home/$USER/.vst3/Hamburger.vst3"
+	mkdir -p "/home/$USER/.clap" || cp "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/CLAP/Hamburger.clap" "/home/$USER/.clap/Hamburger.clap" && chmod 755 "/home/$USER/.clap/Hamburger.clap"
+
+	# Need to figure out adding sudo to test docker
+	# mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/Standalone/Hamburger" "/usr/bin" && chmod 644 "/usr/bin/Hamburger"
+	# mkdir -p "/usr/share/licenses/$pkgname" || cp "$srcdir/hamburger-hurley/LICENSE.md" "/usr/share/licenses/$pkgname/LICENSE" && chmod 644 "/usr/share/licenses/$pkgname/LICENSE"
+	# mkdir -p "/usr/share/doc/$pkgname" || cp "$srcdir/hamburger-hurley/README.md" "/usr/share/doc/$pkgname" && chmod 644 "/usr/share/doc/$pkgname"
 }

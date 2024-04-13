@@ -11,9 +11,8 @@ COPY PKGBUILD /home/builduser/hamburger
 RUN chown builduser -R /home/builduser/hamburger
 
 RUN sudo -u builduser bash -c "cd /home/builduser/hamburger && makepkg --noconfirm"
-RUN pacman -Rns $(pacman -Qtdq)
 
-
+RUN sudo -u builduser bash -c makepkg --install
 
 WORKDIR /home/builduser
 
