@@ -13,7 +13,7 @@ void Fuzz::prepare(dsp::ProcessSpec& spec) {
 }
 
 void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
-	TRACE_EVENT("dsp", "Fuzz::processBlock");
+	// // TRACE_EVENT("dsp", "Fuzz::processBlock");
 	bias.update();
 
 

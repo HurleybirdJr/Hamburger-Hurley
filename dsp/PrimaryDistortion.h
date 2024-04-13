@@ -53,7 +53,7 @@ public:
         case 0:
         { // classic
 
-            TRACE_EVENT("dsp", "classic");
+            // TRACE_EVENT("dsp", "classic");
             // patty->processBlock(block);
             fuzz->processBlock(block);
 
@@ -90,14 +90,14 @@ public:
         }
         case 1:
         { // tube
-            TRACE_EVENT("dsp", "tube");
+            // TRACE_EVENT("dsp", "tube");
             jeff->processBlock(block);
             tubeAmp->processBlock(block);
             break;
         }
         case 2:
         { // phase distortion
-            TRACE_EVENT("dsp", "phase");
+            // TRACE_EVENT("dsp", "phase");
             phaseDist->processBlock(block);
         }
         }

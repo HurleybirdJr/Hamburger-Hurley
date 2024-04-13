@@ -24,7 +24,7 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) {
 };
 
 void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
-	TRACE_EVENT("dsp", "PhaseDist::processBlock");
+	// // TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
 	normalise.update();

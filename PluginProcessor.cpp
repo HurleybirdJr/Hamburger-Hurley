@@ -260,7 +260,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
     {
-        TRACE_EVENT("dsp", "oversampling config");
+        // // TRACE_EVENT("dsp", "oversampling config");
 
         dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
@@ -285,12 +285,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
+    // // TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
 
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
 
-    TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
     // dry/wet
 
     // input gain
@@ -306,7 +306,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     bool emphasisOn = enableEmphasis->get();
     if (emphasisOn)
     {
-        TRACE_EVENT("dsp", "emphasis EQ before");
+        // // TRACE_EVENT("dsp", "emphasis EQ before");
         // update coeffs IF WE NEED TO
         for (int i = 0; i < 3; i++)
         {
@@ -331,25 +331,25 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // companding
     {
-        TRACE_EVENT("dsp", "companding");
+        // // TRACE_EVENT("dsp", "companding");
         dynamics.processBlock(block);
     }
 
     {
-        TRACE_EVENT("dsp", "noise distortion");
+        // // TRACE_EVENT("dsp", "noise distortion");
         noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
     }
 
 
     {
-        TRACE_EVENT("dsp", "pre distortion");
+        // // TRACE_EVENT("dsp", "pre distortion");
         preDistortionSelection.processBlock(block);
     }
 
     dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     {
-        TRACE_EVENT("dsp", "primary distortion");
+        // // TRACE_EVENT("dsp", "primary distortion");
         distortionTypeSelection.processBlock(oversampledBlock);
     }
 
@@ -357,7 +357,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     if (emphasisOn)
     {
-        TRACE_EVENT("dsp", "emphasis EQ after");
+        // // TRACE_EVENT("dsp", "emphasis EQ after");
         for (int i = 0; i < 3; i++)
         {
             peakFilterAfter[i].process(context);
@@ -365,7 +365,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
 
     {
-        TRACE_EVENT("dsp", "other");
+        // // TRACE_EVENT("dsp", "other");
         // emphasis compensated gain
         float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
         emphasisCompensationGain.setGainDecibels(-eqCompensation);

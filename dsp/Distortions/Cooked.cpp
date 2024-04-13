@@ -12,7 +12,7 @@ void Cooked::prepare(juce::dsp::ProcessSpec& spec) {
 }
 
 void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) {
-	TRACE_EVENT("dsp", "Cooked::processBlock");
+	// // TRACE_EVENT("dsp", "Cooked::processBlock");
 	amount.update();
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {

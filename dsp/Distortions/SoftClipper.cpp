@@ -18,7 +18,7 @@ void SoftClip::prepare(juce::dsp::ProcessSpec& spec)
 }
 
 void SoftClip::processBlock(juce::dsp::AudioBlock<float>& block) {
-    TRACE_EVENT("dsp", "SoftClip::processBlock");
+    // // TRACE_EVENT("dsp", "SoftClip::processBlock");
     saturationKnob.update();
 
     

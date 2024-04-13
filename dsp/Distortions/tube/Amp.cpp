@@ -145,22 +145,22 @@ void Amp::calculateCoefficients2()
 
 void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
 {
-    TRACE_EVENT_BEGIN("dsp", "tube coefficients");
+    // // TRACE_EVENT_BEGIN("dsp", "tube coefficients");
     tubeTone.update();
 
     calculateCoefficients();
-    TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
 
     // step 1: remove DC with highpass filter
-    TRACE_EVENT_BEGIN("dsp", "highpass");
+    // // TRACE_EVENT_BEGIN("dsp", "highpass");
     // inputHighPass.process(dsp::ProcessContextReplacing<float>(block));
-    TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
 
     // step 2: apply gain
     block.multiplyBy(inputGain);
 
     // left channel
-    TRACE_EVENT_BEGIN("dsp", "tubes");
+    // // TRACE_EVENT_BEGIN("dsp", "tubes");
     block.add(bias.getRaw() * 3.0f);
 
     triodes[0].processBlock(block); // step 3: triode 1
@@ -172,7 +172,7 @@ void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
     triodes[3].processBlock(block);
 
     block.multiplyBy(tubeCompress);
-    TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
 
     // step 7: tone stack?
     // step 8: output gain
