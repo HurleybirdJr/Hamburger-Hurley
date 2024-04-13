@@ -105,7 +105,7 @@ jobs:
         p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
 
     - name: '(LINUX / MAC) ​ ​ ​ | configure'
-      if: ${{ !startsWith(matrix.os, 'windows') }}
+      if: ${{ !startsWith(matrix.os, 'windows') || !startsWith(matrix.name, 'Arch')}}
       id: configure
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
@@ -123,6 +123,7 @@ jobs:
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU --parallel $(($(nproc) - 1))
 
     - name: '(LINUX / WIN) ​ ​ ​ | build'
+      if: ${{ !startsWith(matrix.os, 'macos') || !startsWith(matrix.name, 'Arch') }}
       id: build
       run: |
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 --parallel $(($(nproc) - 1))
