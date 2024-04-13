@@ -28,11 +28,17 @@ jobs:
             folder: "build_windows"
           }
         - {
-            name: "Linux (x86_64)",
+            name: "Ubuntu Linux (x86_64)",
             os: ubuntu-20.04,
             compiler: "Unix Makefiles",
             folder: "build_linux"
           }
+        - {
+            name: "Arch Linux (x86_64)",
+            os: ubuntu-20.04,
+            compiler: "Unix Makefiles",
+            folder: "build_linux"
+        }
         # - {
         #     name: "Mac Intel (x86_64)",
         #     os: macos-13,
@@ -49,14 +55,29 @@ jobs:
     concurrency: build_${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
 
-    - name: (linux) install juce dependencies
+    - name: (UBUNTU LINUX) install juce dependencies
       if: startsWith(matrix.os, 'ubuntu')
-      id: juce_dependencies
+      id: ubuntu_juce_dependencies
       run: | 
         sudo apt-get update
         sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
+
+    - name: (ARCH LINUX) create package from pkgbuild
+      if: startsWith(matrix.name, 'Arch')
+      id: arch_package
+      uses: heyhusen/archlinux-package-action@v2
+      with:
+        flags: ''
+        namcap: true
+        pkgver: true
+        pkgrel: true
+        srcinfo: true
+        update_archlinux_keyring: false
+        updatebpkgsums: false
+
 
     - name: cache stuff
       id: cache_stuff
@@ -93,25 +114,25 @@ jobs:
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
 
-    - name: (unix  mac / linux) configure
+    - name: (MAC / LINUX) configure
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
 
-    - name: build
+    - name: (WIN / LINUX) build
       id: build
       run: |
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 --parallel $(($(nproc) - 1))
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP --parallel $(($(nproc) - 1))
 
-    - name: (mac) build
+    - name: (MAC) build
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU --parallel $(($(nproc) - 1))
 
-    - name: (windows) package
+    - name: (WINDOWS) package
       if: startsWith(matrix.os, 'windows')
       id: package_windows
       run: |
@@ -122,7 +143,7 @@ jobs:
         cp "${{matrix.folder}}/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
-    - name: (linux) package
+    - name: (UBUNTU LINUX) package
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
@@ -130,13 +151,13 @@ jobs:
         mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
         mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
-    - name: (mac) package
+    - name: (MAC) package
       if: startsWith(matrix.os, 'macos')
       id: package_mac
       run: |
         mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
 
-    - name: (mac) code signing
+    - name: (MAC) code signing
       if: startsWith(matrix.os, 'macos')
       id: code_signing
       run: |
@@ -162,7 +183,7 @@ jobs:
         xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.clap"
         xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.component"
 
-    # - name: (mac) auval
+    # - name: (MAC) auval
     #   if: startsWith(matrix.os, 'macos')
     #   id: auval
     #   run: |
@@ -171,7 +192,7 @@ jobs:
     #     auval -a
     #     auval -strict -v aufx Prsm Ured
 
-    - name: (windows) build installer
+    - name: (WINDOWS) build installer
       if: startsWith(matrix.os, 'windows')
       id: installer_windows
       run: |
@@ -179,7 +200,7 @@ jobs:
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
         mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
-    - name: (mac) import installer certificates
+    - name: (MAC) import installer certificates
       if: startsWith(matrix.os, 'macos')
       id: import_installer_certificates
       uses: apple-actions/import-codesign-certs@v2
@@ -190,7 +211,7 @@ jobs:
         p12-password: ${{ secrets.DEV_ID_INSTALL_PASSWORD }}
         create-keychain: false
 
-    - name: (mac) build installer
+    - name: (MAC) build installer
       if: startsWith(matrix.os, 'macos')
       id: installer_mac
       run: |
@@ -212,5 +233,5 @@ jobs:
 
     - uses: actions/upload-artifact@v3
       with:
-        name: ${{env.PLUG}} ${{ matrix.name }}
+        name: "${{env.PLUG}} ${{ matrix.name }}"
         path: "./gh_artifacts"
