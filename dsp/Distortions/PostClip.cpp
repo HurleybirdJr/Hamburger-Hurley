@@ -27,7 +27,9 @@ void PostClip::prepare(juce::dsp::ProcessSpec &spec)
 /* DONT USE TOGETHER WITH processBlock or smooth value calculations mess up */
 void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
 {
+    #ifdef DEBUG
     TRACE_EVENT("dsp", "PostClip::processBlock");
+    #endif
 
     gainKnob.update();
     kneeKnob.update();

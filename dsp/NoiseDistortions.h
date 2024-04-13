@@ -37,24 +37,40 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // sizzle
-            { TRACE_EVENT("dsp", "sizzle");
-            sizzle->processBlock(block);
-            break;
+            {
+                #ifdef DEBUG
+                TRACE_EVENT("dsp", "sizzle");
+                #endif
+
+                sizzle->processBlock(block);
+                break;
             }
         case 1: // erosion
-            { TRACE_EVENT("dsp", "erosion");
-            erosion->processBlock(block);
-            break;
+            {
+                #ifdef DEBUG
+                TRACE_EVENT("dsp", "erosion");
+                #endif
+
+                erosion->processBlock(block);
+                break;
             }
         case 2: // downsampling
-            { TRACE_EVENT("dsp", "redux");
-            redux->processBlock(block);
-            break;
+            {
+                #ifdef DEBUG
+                TRACE_EVENT("dsp", "redux");
+                #endif
+
+                redux->processBlock(block);
+                break;
             }
         case 3: // jeff
-            { TRACE_EVENT("dsp", "gate");
-            gate->processBlock(block);
-            break;
+            {
+                #ifdef DEBUG
+                TRACE_EVENT("dsp", "gate");
+                #endif
+
+                gate->processBlock(block);
+                break;
             }
         case 4: {
             sizzle->processBlockOG(block);

@@ -30,7 +30,9 @@ void Redux::prepare(juce::dsp::ProcessSpec &spec)
 
 void Redux::antiAliasingStep(juce::dsp::AudioBlock<float> &block)
 {
+	#ifdef DEBUG
 	TRACE_EVENT("dsp", "Redux::antiAliasingStep");
+	#endif
 
 	downsample.update();
 	if (oldDownsample != downsample.getRaw())
@@ -48,7 +50,10 @@ void Redux::antiAliasingStep(juce::dsp::AudioBlock<float> &block)
 
 void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 {
+	#ifdef DEBUG
 	TRACE_EVENT("dsp", "Redux::processBlock");
+	#endif
+
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 

@@ -5,7 +5,9 @@
 
 #include "../EnvelopeFollower.h"
 
+#ifdef DEBUG
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#endif
 
 class Fuzz
 {

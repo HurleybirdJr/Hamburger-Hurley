@@ -102,14 +102,14 @@ jobs:
     - name: build
       id: build
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 -j
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP -j
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 --parallel $(($(nproc) - 1))
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP --parallel $(($(nproc) - 1))
 
     - name: (mac) build
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU -j
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU --parallel $(($(nproc) - 1))
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')

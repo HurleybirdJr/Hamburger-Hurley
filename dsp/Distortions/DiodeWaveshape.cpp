@@ -10,7 +10,10 @@ void DiodeWaveshape::prepare(juce::dsp::ProcessSpec &spec)
 
 void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block)
 {
+	#ifdef DEBUG
 	TRACE_EVENT("dsp", "DiodeWaveshape::processBlock");
+	#endif
+
 	amount.update();
 
 	for (int channel = 0; channel < block.getNumChannels(); channel++)

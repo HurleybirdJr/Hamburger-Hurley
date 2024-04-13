@@ -20,7 +20,9 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        #ifdef DEBUG
         TRACE_DSP();
+        #endif
 
         speed.update();
         makeup.update();

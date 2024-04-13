@@ -5,7 +5,9 @@
 
 #include "juce_dsp/juce_dsp.h"
 
+#ifdef DEBUG
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#endif
 
 class PattyFuzz
 {

@@ -60,7 +60,9 @@ public:
 
         float allPassAmt = fmin(allPassAmount.getRaw(), 50.0f);
 
+        #ifdef DEBUG
         TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
+        #endif
 
         auto samples = interleavedSubBlock.getChannelPointer(0);
 
@@ -78,7 +80,9 @@ public:
             samples[sample] = sampleVal;
         }
 
+        #ifdef DEBUG
         TRACE_EVENT_END("dsp");
+        #endif
 
         auto outChannels = prepareChannelPointers(context.getOutputBlock());
 

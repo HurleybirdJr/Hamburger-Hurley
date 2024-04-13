@@ -12,7 +12,10 @@ void Cooked::prepare(juce::dsp::ProcessSpec& spec) {
 }
 
 void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) {
+	#ifdef DEBUG
 	TRACE_EVENT("dsp", "Cooked::processBlock");
+	#endif
+
 	amount.update();
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {

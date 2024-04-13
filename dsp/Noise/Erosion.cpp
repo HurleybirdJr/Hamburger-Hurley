@@ -4,7 +4,9 @@
 
 void Erosion::processBlock(juce::dsp::AudioBlock<float>& block)
 {
-TRACE_EVENT("dsp", "Erosion::processBlock");
+    #ifdef DEBUG
+    TRACE_EVENT("dsp", "Erosion::processBlock");
+    #endif
 
     erosionAmount.update();
     erosionFrequency.update();

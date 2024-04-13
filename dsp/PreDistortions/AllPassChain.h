@@ -26,7 +26,9 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        #ifdef DEBUG
         TRACE_EVENT("dsp", "AllPassChain::processBlock");
+        #endif
         
         allPassAmount.update();
         allPassFrequency.update();

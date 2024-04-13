@@ -1,7 +1,9 @@
 #pragma once
 #include "../SmoothParam.h"
 
+#ifdef DEBUG
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#endif
 
 class PostClip
 {

@@ -53,8 +53,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
-
-
 if(APPLE)
     set(outdir "../build_mac")
 else()
@@ -110,7 +108,6 @@ target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
-    PERFETTO=0
 	JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0
@@ -150,42 +147,54 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-
-
-FetchContent_Declare (melatonin_perfetto
-  GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
-  GIT_TAG origin/main)
-
 FetchContent_Declare (xsimd 
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
     GIT_TAG origin/master)
     
-FetchContent_Declare (melatonin_inspector
-    GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
-    GIT_TAG origin/main
-    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
   GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
   GIT_TAG origin/main)
 
-FetchContent_MakeAvailable (melatonin_perfetto xsimd melatonin_inspector clap-juce-extensions)
+FetchContent_MakeAvailable (xsimd clap-juce-extensions)
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
 CLAP_ID "com.AviaryAudio.${PluginName}"
 CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
-
 target_link_libraries("${BaseTargetName}"
-    PRIVATE
-        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
-        juce::juce_dsp
-        juce::juce_audio_utils
-        "${BaseTargetName}BinaryData"
-        Melatonin::Perfetto
-        xsimd
-        melatonin_inspector
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+		PRIVATE
+		# AudioPluginData           # If we'd created a binary data target, we'd link to it here
+		juce::juce_dsp
+		juce::juce_audio_utils
+		"${BaseTargetName}BinaryData"
+		xsimd
+		PUBLIC
+		juce::juce_recommended_config_flags
+		juce::juce_recommended_lto_flags
+		juce::juce_recommended_warning_flags)
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+	add_compile_definitions(DEBUG)
+
+	target_compile_definitions("${BaseTargetName}" PUBLIC
+			PERFETTO=0
+	)
+
+	FetchContent_Declare (melatonin_perfetto
+			GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
+			GIT_TAG origin/main)
+
+	FetchContent_Declare (melatonin_inspector
+			GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+			GIT_TAG origin/main
+			SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
+
+	FetchContent_MakeAvailable (melatonin_perfetto melatonin_inspector)
+
+
+	target_link_libraries("${BaseTargetName}"
+		PRIVATE
+			Melatonin::Perfetto
+			melatonin_inspector)
+endif()
