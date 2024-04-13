@@ -56,6 +56,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
+    - name: 'create directories'
+      id: create_dirs
+      run: |
+        mkdir "./gh_artifacts/"
+        mkdir "./gh_artifacts/Manual Install"
+
     - name: '(LINUX) [ARCH] | create and run pkgbuild'
       if: startsWith(matrix.name, 'Arch')
       id: arch_package
@@ -64,9 +70,14 @@ jobs:
         flags: ''
         namcap: true
         pkgver: true
-        srcinfo: true
         update_archlinux_keyring: false
-        updpkgsums: false
+
+    - name: '(LINUX) [ARCH] package'
+      if: startsWith(matrix.name, 'Arch')
+      run:
+        pwd
+        mkdir "./gh_artifacts/Arch"
+        mv "$GITHUB_WORKSPACE/*" "./gh_artifacts/Arch"
 
     - name: '(LINUX) [UBUNTU] | install juce dependencies'
       if: startsWith(matrix.name, 'Ubuntu')
@@ -76,17 +87,12 @@ jobs:
         sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
 
     - name: 'cache stuff'
+      if: ${{ !startsWith(matrix.name, 'Arch') }}
       id: cache_stuff
       uses: actions/cache@main
       with:
         path: "${{matrix.folder}}"
         key: "${{matrix.folder}}"
-    
-    - name: 'create directories'
-      id: create_dirs
-      run: |
-        mkdir "./gh_artifacts/"
-        mkdir "./gh_artifacts/Manual Install"
 
     - name: '(MAC) | select xcode version'
       if: startsWith(matrix.os, 'macos')
