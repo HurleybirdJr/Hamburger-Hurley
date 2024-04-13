@@ -20,13 +20,18 @@ sha256sums=("SKIP")
 
 build() {
 	cd "$pkgname"
+	echo "$pkgdir"
+	echo "$srcdir"
 	cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
-	cmake --build "build_linux" --config Release --target Hamburger_VST3 -j
-  cmake --build "build_linux" --config Release --target Hamburger_CLAP -j
+	cmake --build "build_linux" --config Release --target Hamburger_VST3 -j1
+    cmake --build "build_linux" --config Release --target Hamburger_CLAP -j1
 }
 
 package() {
 	cd "$pkgname"
-	install -Dm755 ./Hamburger "$pkgdir/usr/bin/hamburger"
-	install -Dm644 ./README.md "$pkgdir/usr/share/doc/$pkgname"
+	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/VST3/Hamburger.vst3" "$pkgdir/home/$USER/.vst3"
+	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/CLAP/Hamburger.clap" "$pkgdir/home/$USER/.clap"
+	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/Standalone/Hamburger" "$pkgdir/home/$USER/.clap"
+	install -Dm644 "$srcdir/hamburger-hurley/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm644 "$srcdir/hamburger-hurley/README.md" "$pkgdir/usr/share/doc/$pkgname"
 }

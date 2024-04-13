@@ -38,13 +38,13 @@ jobs:
     - name: (unix linux) configure
       id: configure
       run: |
-        cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
+        cmake -B "build_linux" -G Ninja -DCMAKE_BUILD_TYPE:STRING=Release
 
     - name: build
       id: build
       run: |
-        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_VST3 -j
-        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_CLAP -j
+        ninja --build "build_linux" --config Release --target ${{env.NOSPACE}}_VST3 -j9
+        ninja --build "build_linux" --config Release --target ${{env.NOSPACE}}_CLAP -j9
 
     - name: (linux) package
       id: package_linux
