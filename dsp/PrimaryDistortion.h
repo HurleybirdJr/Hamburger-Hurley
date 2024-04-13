@@ -40,7 +40,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        TRACE_DSP();
+        // TRACE_DSP();
         int distoTypeIndex = distoType->getIndex();
 
         if (distortionEnabled->get() == false)

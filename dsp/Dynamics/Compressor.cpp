@@ -9,7 +9,7 @@ void Compressor::prepare(juce::dsp::ProcessSpec& spec)
 
 void Compressor::processBlock(juce::dsp::AudioBlock<float>& dryBuffer)
 {
-    TRACE_DSP();
+    // TRACE_DSP();
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
 
     for (size_t sample = 0; sample < dryBuffer.getNumSamples(); sample++)
