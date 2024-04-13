@@ -54,9 +54,9 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@main
 
-    - name: '(LINUX) ​ [ARCH] ​ | create and run pkgbuild'
+    - name: '(LINUX) [ARCH] | create and run pkgbuild'
       if: startsWith(matrix.name, 'Arch')
       id: arch_package
       uses: heyhusen/archlinux-package-action@v2.2.1
@@ -75,26 +75,26 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
 
-    - name: '​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | cache stuff'
+    - name: 'cache stuff'
       id: cache_stuff
-      uses: actions/cache@v3
+      uses: actions/cache@main
       with:
         path: "${{matrix.folder}}"
         key: "${{matrix.folder}}"
     
-    - name: '​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | create directories'
+    - name: 'create directories'
       id: create_dirs
       run: |
         mkdir "./gh_artifacts/"
         mkdir "./gh_artifacts/Manual Install"
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | select xcode version'
+    - name: '(MAC) | select xcode version'
       if: startsWith(matrix.os, 'macos')
       id: xcode_version
       run: |
         sudo xcode-select -s '/Applications/Xcode_15.1.app/Contents/Developer'
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | import certificates'
+    - name: '(MAC) | import certificates'
       if: startsWith(matrix.os, 'macos')
       id: import_certificates
       uses: apple-actions/import-codesign-certs@v2
@@ -104,38 +104,38 @@ jobs:
         p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
         p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
 
-    - name: '(LINUX / MAC) ​ ​ ​ | configure'
-      if: ${{ !startsWith(matrix.os, 'windows') || !startsWith(matrix.name, 'Arch')}}
+    - name: '(LINUX / MAC) | configure'
+      if: ${{ !startsWith(matrix.os, 'windows') && !startsWith(matrix.name, 'Arch')}}
       id: configure
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
 
-    - name: '(WIN) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | configure'
+    - name: '(WIN) | configure'
       if: startsWith(matrix.os, 'windows')
       id: configure_windows
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | build'
+    - name: '(MAC) | build'
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU --parallel $(($(nproc) - 1))
 
-    - name: '(LINUX / WIN) ​ ​ ​ | build'
-      if: ${{ !startsWith(matrix.os, 'macos') || !startsWith(matrix.name, 'Arch') }}
+    - name: '(LINUX / WIN) | build'
+      if: ${{ !startsWith(matrix.os, 'macos') && !startsWith(matrix.name, 'Arch') }}
       id: build
       run: |
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 --parallel $(($(nproc) - 1))
         cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP --parallel $(($(nproc) - 1))
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | package'
+    - name: '(MAC) | package'
       if: startsWith(matrix.os, 'macos')
       id: package_mac
       run: |
         mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
 
-    - name: '(WIN) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | package'
+    - name: '(WIN) | package'
       if: startsWith(matrix.os, 'windows')
       id: package_windows
       run: |
@@ -146,7 +146,7 @@ jobs:
         cp "${{matrix.folder}}/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
-    - name: '(LINUX) ​ ​ ​ ​ ​ ​ ​ ​ ​ | package'
+    - name: '(LINUX) | package'
       if: startsWith(matrix.name, 'Ubuntu')
       id: package_linux
       run: |
@@ -154,7 +154,7 @@ jobs:
         mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
         mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | code signing'
+    - name: '(MAC) | code signing'
       if: startsWith(matrix.os, 'macos')
       id: code_signing
       run: |
@@ -180,7 +180,7 @@ jobs:
         xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.clap"
         xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.component"
 
-    # - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | auval'
+    # - name: '(MAC) | auval'
     #   if: startsWith(matrix.os, 'macos')
     #   id: auval
     #   run: |
@@ -189,7 +189,7 @@ jobs:
     #     auval -a
     #     auval -strict -v aufx Prsm Ured
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | import installer certificates'
+    - name: '(MAC) | import installer certificates'
       if: startsWith(matrix.os, 'macos')
       id: import_installer_certificates
       uses: apple-actions/import-codesign-certs@v2
@@ -200,7 +200,7 @@ jobs:
         p12-password: ${{ secrets.DEV_ID_INSTALL_PASSWORD }}
         create-keychain: false
 
-    - name: '(MAC) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | build installer'
+    - name: '(MAC) | build installer'
       if: startsWith(matrix.os, 'macos')
       id: installer_mac
       run: |
@@ -220,7 +220,7 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/"
         mv "${{env.PLUG}} Installer.pkg" "./gh_artifacts"
 
-    - name: '(WIN) ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | build installer'
+    - name: '(WIN) | build installer'
       if: startsWith(matrix.os, 'windows')
       id: installer_windows
       run: |
@@ -228,8 +228,8 @@ jobs:
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
         mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
-    - name: '​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ | upload artifacts'
-      uses: actions/upload-artifact@v3
+    - name: 'upload artifacts'
+      uses: actions/upload-artifact@main
       with:
         name: "${{env.PLUG}} ${{ matrix.name }}"
         path: "./gh_artifacts"
