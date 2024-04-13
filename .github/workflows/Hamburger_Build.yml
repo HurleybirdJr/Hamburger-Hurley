@@ -71,6 +71,7 @@ jobs:
         namcap: true
         pkgver: true
         update_archlinux_keyring: false
+        aur: true
 
     - name: '(LINUX) [ARCH] package'
       if: startsWith(matrix.name, 'Arch')
