@@ -198,4 +198,3 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 			Melatonin::Perfetto
 			melatonin_inspector)
 endif()
-
