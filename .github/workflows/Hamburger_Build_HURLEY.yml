@@ -29,6 +29,12 @@ jobs:
     #    sudo apt-get update
     #    sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
 
+    - name: Set short git commit SHA
+      id: vars
+      run: |
+        calculatedSha=$(git rev-parse --short ${{ github.sha }})
+        echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
+
     - name: create directories
       id: create_dirs
       run: |
@@ -43,17 +49,17 @@ jobs:
     - name: build
       id: build
       run: |
-        ninja --build "build_linux" --config Release --target ${{env.NOSPACE}}_VST3 -j9
-        ninja --build "build_linux" --config Release --target ${{env.NOSPACE}}_CLAP -j9
+        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_VST3 -j9
+        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_CLAP -j9
 
     - name: (linux) package
       id: package_linux
       run: |
         pwd
-        mv "./build_linux/Hamburger_artefacts/Release/VST3/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
-        mv "./build_linux/Hamburger_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./build_linux/Hamburger_artefacts/Release/VST3/${{env.PLUG}}.vst3" "./gh_artifacts/${{env.PLUG}}.vst3"
+        mv "./build_linux/Hamburger_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/${{env.PLUG}}.clap"
 
     - uses: actions/upload-artifact@v3
       with:
-        name: "${{env.PLUG}} Linux (x86_64)"
+        name: "[${{ env.COMMIT_SHORT_SHA }}] ${{env.PLUG}} Arch Linux (x86_64)"
         path: "./gh_artifacts"

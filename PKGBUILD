@@ -24,14 +24,15 @@ build() {
 	echo "$srcdir"
 	cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
 	cmake --build "build_linux" --config Release --target Hamburger_VST3 -j1
-    cmake --build "build_linux" --config Release --target Hamburger_CLAP -j1
+  cmake --build "build_linux" --config Release --target Hamburger_CLAP -j1
+  cmake --build "build_linux" --config Release --target Hamburger_Standalone -j1
 }
 
 package() {
 	cd "$pkgname"
-	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/VST3/Hamburger.vst3" "$pkgdir/home/$USER/.vst3"
-	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/CLAP/Hamburger.clap" "$pkgdir/home/$USER/.clap"
-	install -Dm755 "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/Standalone/Hamburger" "$pkgdir/home/$USER/.clap"
-	install -Dm644 "$srcdir/hamburger-hurley/LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-	install -Dm644 "$srcdir/hamburger-hurley/README.md" "$pkgdir/usr/share/doc/$pkgname"
+	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/VST3/Hamburger.vst3" "/home/$USER/.vst3/Hamburger.vst3" && chmod 755 "/home/$USER/.vst3/Hamburger.vst3"
+	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/CLAP/Hamburger.clap" "/home/$USER/.clap" && chmod 755 "/home/$USER/.clap/Hamburger.clap"
+	mv "$srcdir/hamburger-hurley/build_linux/Hamburger_artefacts/Release/Standalone/Hamburger" "/usr/bin" && chmod 644 "/usr/bin/Hamburger"
+	mv "$srcdir/hamburger-hurley/LICENSE.md" "/usr/share/licenses/$pkgname/LICENSE" && chmod 644 "/usr/share/licenses/$pkgname/LICENSE"
+	mv "$srcdir/hamburger-hurley/README.md" "/usr/share/doc/$pkgname" && chmod 644 "/usr/share/doc/$pkgname"
 }

@@ -21,7 +21,7 @@
 // #include "dsp/SIMDGain.h"
 
 // profiling
-#include <melatonin_perfetto/melatonin_perfetto.h>
+// #include <melatonin_perfetto/melatonin_perfetto.h>
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
