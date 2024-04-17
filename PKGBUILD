@@ -7,7 +7,7 @@ arch=("x86_64")
 url="https://aviaryaudio.com/plugins/hamburgerv2"
 license=('GPL-3.0-only')
 depends=(gcc-libs glibc freetype2 alsa-lib)
-makedepends=(base-devel git cmake libx11 libxrandr libxcursor libxinerama alsa-lib freetype2)
+makedepends=(base-devel git cmake libx11 libxrandr libxcursor libxinerama)
 # install=
 # source=("$pkgname-$pkgver.tar.gz") - USE FOR BINARY
 source=("git+https://github.com/HurleybirdJr/hamburger-hurley.git#branch=cmake_debug_fix")
