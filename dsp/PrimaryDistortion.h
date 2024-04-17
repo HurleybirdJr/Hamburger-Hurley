@@ -129,7 +129,10 @@ public:
         }
         case 4:
         {// waveshaping matrix distortion
+            #ifdef DEBUG
             TRACE_EVENT("dsp", "matrix");
+            #endif
+
             matrix->processBlock(block);
             break;
         }
