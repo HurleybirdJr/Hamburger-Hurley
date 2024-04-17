@@ -25,7 +25,7 @@ build() {
 	cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
 	cmake --build "build_linux" --config Release --target Hamburger_VST3 --parallel $(($(nproc) - 1))
 	cmake --build "build_linux" --config Release --target Hamburger_CLAP --parallel $(($(nproc) - 1))
-    cmake --build "build_linux" --config Release --target Hamburger_Standalone --parallel $(($(nproc) - 1))
+  cmake --build "build_linux" --config Release --target Hamburger_Standalone --parallel $(($(nproc) - 1))
 }
 
 package() {
