@@ -9,7 +9,7 @@ PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) :
 	normalise(treeState, "phaseDistNormalise")
 	{};
 
-void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) {
+void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	this->sampleRate = spec.sampleRate;
 
 	amount.prepare(spec);
@@ -23,8 +23,8 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) {
 	delayLine.prepare(spec);
 };
 
-void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
-	// // TRACE_EVENT("dsp", "PhaseDist::processBlock");
+void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
+	TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
 	normalise.update();

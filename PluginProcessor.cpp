@@ -126,7 +126,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
 
     params.add(std::make_unique<AudioParameterFloat>("postClipGain", "SoftClip Gain", -18.0f, 18.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 4.0f, 2.f));
+    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 4.0f, 0.5f));
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Grill Saturation", 0.0f, 100.0f, 0.f));
@@ -134,7 +134,18 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("phaseAmount", "Phase Saturation", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("rubidiumAmount", "Rubidium Saturation", 0.0f, 100.0f, 5.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("rubidiumHysteresis", "Rubidium Hysteresis", 0.0f, 100.0f, 10.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix1", "Matrix #1", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix2", "Matrix #2", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix3", "Matrix #3", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix4", "Matrix #4", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix5", "Matrix #5", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix6", "Matrix #6", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix7", "Matrix #7", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix8", "Matrix #8", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix9", "Matrix #9", 0.0f, 1.0f, 0.f));
+
+    params.add(std::make_unique<AudioParameterFloat>("rubidiumMojo", "Rubidium Mojo", 0.0f, 100.0f, 40.f));
+    params.add(std::make_unique<AudioParameterFloat>("rubidiumAsym", "Rubidium Asymmetry", 0.0f, 10.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("rubidiumTone", "Rubidium Tone", juce::NormalisableRange<float>(4.0f, 100.0f, 0.f, 0.5f), 5.0f));
 
     params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
