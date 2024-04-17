@@ -3,6 +3,7 @@
 #include "Modules/Module.h"
 
 #include "Modules/Panels/ClassicSatPanel.h"
+#include "Modules/Panels/MatrixSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
 #include "Modules/Panels/RubidiumSatPanel.h" 
 #include "Modules/Panels/PhaseDistPanel.h"
@@ -41,14 +42,18 @@ public:
         // panels.push_back(std::move(waveshape));
 
         phase = std::make_unique<PhaseDistPanel>(p);
-        phase->setLookAndFeel(&tubeSatLAF); // todo: customise
+        phase->setLookAndFeel(&phaseLAF); // todo: customise
         panels.push_back(std::move(phase));
 
         rubidium = std::make_unique<RubidiumSatPanel>(p);
-        rubidium->setLookAndFeel(&tubeSatLAF); // todo: customise
+        rubidium->setLookAndFeel(&rubidiumLAF); // todo: customise
         panels.push_back(std::move(rubidium));
 
-        saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
+        matrixSat = std::make_unique<MatrixSatPanel>(p);
+        matrixSat->setLookAndFeel(&matrixLAF);
+        panels.push_back(std::move(matrixSat));
+
+        saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
 
         std::vector<std::unique_ptr<Panel>> clipPanel;
@@ -85,12 +90,16 @@ public:
 private:
     KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
     KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
+    KnobLAF phaseLAF = KnobLAF(Palette::colours[3]);
+    KnobLAF rubidiumLAF = KnobLAF(Palette::colours[2]);
+    KnobLAF matrixLAF = KnobLAF(Palette::colours[6]);
     KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
 
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
     std::unique_ptr<Panel> rubidium = nullptr;
+    std::unique_ptr<Panel> matrixSat = nullptr;
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;
