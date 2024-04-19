@@ -5,6 +5,8 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif
 
+#include "../../utils/Params.h"
+
 class PostClip
 {
 public:

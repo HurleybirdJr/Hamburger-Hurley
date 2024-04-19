@@ -31,17 +31,17 @@ else()
 endif()
 
 
-if (MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
-elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
-endif()
+# if (MSVC)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
+# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
+# endif()
 
-if (MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
-elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
-endif()
+# if (MSVC)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
+# endif()
 
 FetchContent_Declare(
 	JUCE
@@ -108,6 +108,8 @@ target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
+    PERFETTO=0
+    #DONT_SET_USING_JUCE_NAMESPACE=1 # if i ever want to remove juce as being included in the namespace by default
 	JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0
@@ -134,6 +136,7 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/poweroff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
+    Assets/Quicksand-Bold.ttf
     Assets/clap-icon.png
     Assets/vst-icon.png
     Assets/wompwuzhere.png
@@ -149,11 +152,13 @@ set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPEND
 
 FetchContent_Declare (xsimd 
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+    GIT_SHALLOW 1
     GIT_TAG origin/master)
-    
+
 
 FetchContent_Declare (clap-juce-extensions
   GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+  GIT_SHALLOW 1
   GIT_TAG origin/main)
 
 FetchContent_MakeAvailable (xsimd clap-juce-extensions)
@@ -183,10 +188,12 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 
 	FetchContent_Declare (melatonin_perfetto
 			GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
+            GIT_SHALLOW 1
 			GIT_TAG origin/main)
 
 	FetchContent_Declare (melatonin_inspector
 			GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+            GIT_SHALLOW 1
 			GIT_TAG origin/main
 			SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 

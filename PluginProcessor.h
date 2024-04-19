@@ -17,8 +17,7 @@
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
 
-// #include "xsimd/xsimd.hpp"
-// #include "dsp/SIMDGain.h"
+// #include "dsp/ProcessDuplicator.h"
 
 // profiling
 #ifdef DEBUG
@@ -74,10 +73,9 @@ public:
     AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
     AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
 
-    PresetManager& getPresetManager() { return *presetManager; }
+    Preset::PresetManager& getPresetManager() { return *presetManager; }
 
 private:
-    // juce::AudioParameterFloat *knobValue = nullptr;
     juce::AudioParameterFloat *inputGainKnob = nullptr;
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
@@ -85,21 +83,19 @@ private:
     juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterBool *enableEmphasis = nullptr;
     juce::AudioParameterInt *hq = nullptr;
-    juce::AudioParameterBool *hamburgerEnabledButton = nullptr; // acts as bypass
+    juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
 
     juce::AudioParameterFloat *emphasisLow = nullptr;
-    juce::AudioParameterFloat *emphasisMid = nullptr;
     juce::AudioParameterFloat *emphasisHigh = nullptr;
     juce::AudioParameterFloat *emphasisLowFreq = nullptr;
-    juce::AudioParameterFloat *emphasisMidFreq = nullptr;
     juce::AudioParameterFloat *emphasisHighFreq = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    juce::AudioParameterFloat *emphasis[3];
-    juce::AudioParameterFloat *emphasisFreq[3];
-    float prevEmphasis[3] = {0.f, 0.f, 0.f};
-    float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
+    juce::AudioParameterFloat *emphasis[2];
+    juce::AudioParameterFloat *emphasisFreq[2];
+    // float prevEmphasis[2] = {0.f, 0.f};
+    // float prevEmphasisFreq[2] = {0.f, 0.f};
 
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;
@@ -109,10 +105,20 @@ private:
 
     // SIMDGain simdGain;
 
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];
+    SmoothParam emphasisLowSmooth;
+    SmoothParam emphasisHighSmooth;
+    SmoothParam emphasisLowFreqSmooth;
+    SmoothParam emphasisHighFreqSmooth;
 
-    float filterFrequencies[3] = {62.0f, 1220.0f, 9000.0f};
+    std::vector<float> emphasisLowBuffer;
+    std::vector<float> emphasisHighBuffer;
+    std::vector<float> emphasisLowFreqBuffer;
+    std::vector<float> emphasisHighFreqBuffer;
+
+    dsp::IIR::Filter<float> peakFilterBefore[2][2];
+    dsp::IIR::Filter<float> peakFilterAfter[2][2];
+
+    float filterFrequencies[2] = {62.0f, 9000.0f};
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;
@@ -129,7 +135,7 @@ private:
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
 
-    std::unique_ptr<PresetManager> presetManager;
+    std::unique_ptr<Preset::PresetManager> presetManager;
 
     #if PERFETTO // if we have the profiling
         std::unique_ptr<perfetto::TracingSession> tracingSession;

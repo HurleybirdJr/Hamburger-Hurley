@@ -2,6 +2,7 @@
 
 #include "../SmoothParam.h"
 #include "WaveShapers.h"
+#include "../../utils/Params.h"
 
 #ifdef DEBUG
 #include <melatonin_perfetto/melatonin_perfetto.h>

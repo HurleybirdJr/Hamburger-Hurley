@@ -8,15 +8,16 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif
 
+#include "../../../utils/Params.h"
 #include "../../SmoothParam.h"
 
 class Amp
 {
 public:
     Amp(juce::AudioProcessorValueTreeState &treeState) : 
-        tubeTone(treeState, "tubeTone"),
-        drive(treeState, "tubeAmount"),
-        bias(treeState, "bias")
+        tubeTone(treeState, ParamIDs::tubeTone),
+        drive(treeState, ParamIDs::tubeAmount),
+        bias(treeState, ParamIDs::tubeBias)
         {}
 
     ~Amp() {}
