@@ -92,7 +92,7 @@ namespace ParamIDs {
     static const juce::ParameterID saturationAmount { "saturationAmount", 1 };
     static const juce::ParameterID diode { "diode", 1 };
     static const juce::ParameterID fold { "fold", 1 };
-    static const juce::ParameterID bias { "bias", 1 };
+    static const juce::ParameterID grillBias { "grillBias", 1 };
 
     // matrix distortion
     static const juce::ParameterID matrix1 { "matrix1", 1 };
@@ -119,16 +119,19 @@ namespace ParamIDs {
     // tube distortion
     static const juce::ParameterID tubeAmount { "tubeAmount", 1 };
     static const juce::ParameterID tubeTone { "tubeTone", 1 };
+    static const juce::ParameterID tubeBias { "tubeBias", 1 };
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
 
     // sizzle
     static const juce::ParameterID sizzleAmount { "sizzleAmount", 1 };
-    static const juce::ParameterID noiseFrequency { "noiseFrequency", 1 };
-    static const juce::ParameterID noiseQ { "noiseQ", 1 };
+    static const juce::ParameterID sizzleFrequency { "sizzleFrequency", 1 };
+    static const juce::ParameterID sizzleQ { "sizzleQ", 1 };
 
 
     // erosion
     static const juce::ParameterID erosionAmount { "erosionAmount", 1 };
+    static const juce::ParameterID erosionFrequency { "erosionFrequency", 1 };
+    static const juce::ParameterID erosionQ { "erosionQ", 1 };
 
 
     static const juce::ParameterID downsampleFreq { "downsampleFreq", 1 };
