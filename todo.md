@@ -1,3 +1,9 @@
+# For v0.4
+
+double check all knob ranges are reasonable
+self hosted sentry.io plugin crash reporting
+fill in matrix distortion section with more distortions
+
 # Must
 
 support mono / stereo only, dont have it break on mono
@@ -7,7 +13,6 @@ make all parameters smooth to remove clicking
 
 # Should
 
-give tube more character
 self hosted sentry.io plugin crash reporting
 speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
@@ -15,6 +20,7 @@ speed up DSP by replacing some direct form filters with svf ones (in the case of
 
 add more dist types (foil??)
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
+other filters before / after distortion, such as combs / phasers / filters etc
 
 # feedback 
 
