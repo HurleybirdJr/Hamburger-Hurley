@@ -86,6 +86,19 @@ jobs:
         keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
         p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
         p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+    
+    - name: set sentry env var
+      id: sentry_env_var
+      run: |
+        echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
+    
+    - name: Set environment variable (Unix / MacOS)
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
+
+    - name: Set environment variable (Windows)
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - name: (windows) configure
       if: startsWith(matrix.os, 'windows')
@@ -97,19 +110,19 @@ jobs:
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
 
     - name: build
       id: build
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 -j
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP -j
+        cmake --build "${{matrix.folder}}" --config RelWithDebInfo --target ${{env.NOSPACE}}_VST3 -j
+        cmake --build "${{matrix.folder}}" --config RelWithDebInfo --target ${{env.NOSPACE}}_CLAP -j
 
     - name: (mac) build
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU -j
+        cmake --build "${{matrix.folder}}" --config RelWithDebInfo --target ${{env.NOSPACE}}_AU -j
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')
@@ -118,7 +131,7 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.vst3/Contents/x86_64-win/${{env.PLUG}}.vst3" "${{env.PLUG}}.vst3"
         rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
-        mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
@@ -128,13 +141,13 @@ jobs:
       run: |
         pwd
         mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
-        mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
       id: package_mac
       run: |
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
 
     - name: (mac) code signing
       if: startsWith(matrix.os, 'macos')

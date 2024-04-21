@@ -8,4 +8,5 @@ JUCE
 
 *.bat
 
-
+.env
+env.cmake
