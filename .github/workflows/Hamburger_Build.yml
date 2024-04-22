@@ -107,7 +107,7 @@ jobs:
         p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
         p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
 
-    - name: set sentry env var
+    - name: 'set sentry env var'
       id: sentry_env_var
       run: |
         echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
@@ -116,7 +116,7 @@ jobs:
       if: ${{ !startsWith(matrix.os, 'windows') }}
       run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
 
-    - name: '(WIN) set environment variable`
+    - name: '(WIN) set environment variable'
       if: ${{ startsWith(matrix.os, 'windows') }}
       run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
