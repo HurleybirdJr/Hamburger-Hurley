@@ -24,8 +24,11 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif
 
+#include "clap-juce-extensions/clap-juce-extensions.h"
+
 //==============================================================================
-class AudioPluginAudioProcessor : public juce::AudioProcessor
+class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
+
 {
 public:
     //==============================================================================
@@ -92,18 +95,11 @@ private:
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    juce::AudioParameterFloat *emphasis[2];
-    juce::AudioParameterFloat *emphasisFreq[2];
-    // float prevEmphasis[2] = {0.f, 0.f};
-    // float prevEmphasisFreq[2] = {0.f, 0.f};
-
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;
     NoiseDistortions noiseDistortionSelection;
     Dynamics dynamics;
     PostClip postClip;
-
-    // SIMDGain simdGain;
 
     SmoothParam emphasisLowSmooth;
     SmoothParam emphasisHighSmooth;
@@ -115,8 +111,8 @@ private:
     std::vector<float> emphasisLowFreqBuffer;
     std::vector<float> emphasisHighFreqBuffer;
 
-    dsp::IIR::Filter<float> peakFilterBefore[2][2];
-    dsp::IIR::Filter<float> peakFilterAfter[2][2];
+    dsp::IIR::Filter<double> peakFilterBefore[2][2];
+    dsp::IIR::Filter<double> peakFilterAfter[2][2];
 
     float filterFrequencies[2] = {62.0f, 9000.0f};
 

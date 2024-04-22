@@ -62,6 +62,7 @@ private:
 	juce::Random random;
 	
 	SmoothParam noiseAmount;
+	SmoothParam fizzAmount;
 	SmoothParam filterTone;
 	SmoothParam filterQ;
 	

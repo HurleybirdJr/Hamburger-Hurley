@@ -1,27 +1,29 @@
+# For v0.4
+
+double check all knob ranges are reasonable
+fill in matrix distortion section with more distortions
+
 # Must
 
 support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
-remove dc clicking from bias params
-make all parameters smoothed to remove clicking
+make all parameters smooth to remove clicking
 
 # Should
 
-give tube more character
-self hosted sentry.io plugin crash reporting
-
+speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
 # Would be nice
 
 add more dist types (foil??)
-linear phase mode for emphasis eq
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
-remove random mid emphasis parameter if it's not used
+other filters before / after distortion, such as combs / phasers / filters etc
+self hosted sentry.io?
+sentry.io proper pdb / breakpad minidump files to make symbols readable, or memory dump. might be too much for free plugin?
 
 # feedback 
 
-double precision on EQs 
 allpass is mixing dry signal (?)
 correct oversampling delay compensation
 complete manual page, reupload with new info for plugin
@@ -32,3 +34,5 @@ separate parameters that have common IDs in the apvts
 
 # other
 gain compensation on grunge?
+
+Revert to Release and not RelWithDebInfo once v1.0 is out
