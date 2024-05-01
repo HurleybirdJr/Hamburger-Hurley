@@ -2,9 +2,7 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 
-#include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlert.h"
-#include "Utils/HamburgerFonts.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {
@@ -16,10 +14,19 @@ std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 	return drawableLogoString;
 }
 
+const std::function<void(std::string)> errorAlertCallback = [](std::string result)
+{
+	DBG(result);
+	auto errorAlert = new BurgerAlert("Error", result, juce::AlertWindow::AlertIconType::WarningIcon);
+
+	errorAlert->createPresetWarning();
+	errorAlert->enterModalState(true, nullptr, true);
+};
+
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::quicksandFont)
+	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb)
 	{
 		auto folderClosedIconString = R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
@@ -34,13 +41,16 @@ public:
 
 		listBox.setRowHeight(36);
 
-		itemFont.setHeight(20.0f);
+		font = hamburgerLAF.getQuicksandFont();
+		font.setHeight(20.0f);
 	}
 
-	void initFiles(bool ignoreCollapsedStates = false) {
+	void initFiles(bool ignoreCollapsedStates = false)
+	{
 		updateContent();
 
-		if (!ignoreCollapsedStates) {
+		if (!ignoreCollapsedStates)
+		{
 			for (auto &file : *filesFolders)
 			{
 				isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
@@ -54,7 +64,7 @@ public:
 	{
 		filesToRender.clear();
 
-		auto& collection = *filesFolders;
+		auto &collection = *filesFolders;
 
 		for (auto &file : collection)
 		{
@@ -103,7 +113,7 @@ public:
 	{
 		if (filesToRender.size() == 0)
 			return;
-		
+
 		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.getFile().isDirectory();
@@ -130,7 +140,7 @@ public:
 
 			g.setColour(Colours::white);
 
-			auto drawArea = Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
+			auto drawArea = juce::Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
 
 			if (collapsed)
 			{
@@ -148,22 +158,30 @@ public:
 			extraRoom = 35;
 
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
-		g.setFont(itemFont);
+		g.setFont(font);
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
 
-		if (presetName.length() > 30) {
-			presetName = presetName.substring(0, 30) + "...";
+		if (presetName.length() > 20)
+		{
+			presetName = presetName.substring(0, 20) + "...";
 		}
 
 		g.drawText(presetName,
 				   15 + depth * 30 + extraRoom, 0, width, height,
 				   Justification::centredLeft, true);
-		
-		g.setColour(Colour::fromRGB(100, 100, 100));
-		g.setFont(itemFont);
 
-		g.drawText(row.getAuthor(),
+		g.setColour(Colour::fromRGB(100, 100, 100));
+		g.setFont(font);
+
+
+		auto authorName = row.getAuthor();
+
+		if (authorName.length() > 15) {
+			authorName = authorName.substring(0, 15) + "...";
+		}
+
+		g.drawText(authorName,
 				   0, 0, width - 20, height,
 				   Justification::centredRight, true);
 	}
@@ -184,7 +202,7 @@ public:
 		else
 		{
 			DBG(item.getFile().getFullPathName());
-			presetManager.loadPreset(item.getFile());
+			presetManager.loadPreset(item.getFile(), errorAlertCallback);
 
 			for (auto listener : singleClickListener)
 			{
@@ -236,7 +254,8 @@ private:
 	std::unique_ptr<juce::Drawable> folderClosedIcon;
 	std::unique_ptr<juce::Drawable> folderOpenIcon;
 
-	Font itemFont;
+	HamburgerLAF hamburgerLAF;
+	Font font;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
@@ -280,12 +299,13 @@ class PresetPanel : public Component, Button::Listener
 {
 public:
 	PresetPanel(Preset::PresetManager &pm) : presetManager(pm),
-									 listBoxModel(pm, listBox),
-									 saveButton("Save", DrawableButton::ImageOnButtonBackground),
-									 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
-									 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
-									 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
-									 closeButton("Close", DrawableButton::ImageOnButtonBackground)
+											 listBoxModel(pm, listBox),
+											 saveButton("Save", DrawableButton::ImageOnButtonBackground),
+											 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
+											 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
+											 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
+											 closeButton("Close", DrawableButton::ImageOnButtonBackground),
+											 openPresetFolderButton("Open Folder", DrawableButton::ImageOnButtonBackground)
 	{
 
 		auto saveIcon = makeIcon(R"svgDELIM(
@@ -313,11 +333,18 @@ public:
 		)svgDelim");
 		closeButton.setImages(closeIcon.get());
 
+		auto folderClosedIconString = makeIcon(R"svgDELIM(
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
+		)svgDELIM");
+
+		openPresetFolderButton.setImages(folderClosedIconString.get());
+
 		setupButton(saveButton, "Save");
 		setupButton(deleteButton, "Delete");
 		setupButton(previousPresetButton, "<");
 		setupButton(nextPresetButton, ">");
 		setupButton(closeButton, "X");
+		setupButton(openPresetFolderButton, "Open Folder");
 
 		closeButton.setVisible(false);
 		closeButton.onClick = [this]
@@ -327,9 +354,6 @@ public:
 			closeButton.setVisible(false);
 			resized();
 		};
-
-		// pass clicks through
-		setInterceptsMouseClicks(false, true);
 
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
@@ -345,6 +369,11 @@ public:
 			resized(); }));
 
 		listBox.setVisible(showPresetsList);
+
+		openPresetFolderButton.onClick = [this]
+		{
+			Preset::defaultDirectory.startAsProcess();
+		};
 
 		currentPresetLabel.setLookAndFeel(&comboBoxLAF);
 		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
@@ -362,18 +391,24 @@ public:
 			resized();
 		};
 
-		MessageManager::callAsync([this]
-		{
+		// pass clicks through
+		setInterceptsMouseClicks(false, true);
+
+		// MessageManager::callAsync([this]
+		// 						  {
 			loadPresetList();
 			this->listBoxModel.initFiles();
 			this->listBox.updateContent();
-			this->listBox.repaint();
-		});
+			this->listBox.repaint(); 
+			// });
 
 		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	~PresetPanel() override = default;
+	~PresetPanel() override {
+		currentPresetLabel.setLookAndFeel(nullptr);
+		
+	};
 
 	void resized() override
 	{
@@ -382,9 +417,14 @@ public:
 
 		saveButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
+		openPresetFolderButton.setBounds(bounds.removeFromLeft(height).reduced(4));
+
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
-		closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
+
+		if (showPresetsList)
+			closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
+
 		currentPresetLabel.setBounds(bounds.reduced(4));
 
 		auto presetListBounds = getLocalBounds().withTrimmedTop(height);
@@ -410,15 +450,6 @@ private:
 		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
 		g.setColour(juce::Colour::fromRGB(0, 0, 0));
 		g.fillPath(p);
-
-		// Rectangle<int> arrowZone(5 + 45 * 2, 0, 20, 45);
-		// Path path;
-		// path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-		// path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
-		// path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-
-		// g.setColour(juce::Colours::white);
-		// g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
 	}
 
 	void buttonClicked(Button *button) override
@@ -436,13 +467,13 @@ private:
 					auto author = alertWindow->getTextEditor("author")->getText();
 					// auto description = alertWindow->getTextEditor("description")->getText();
 
-					auto saveSuccess = presetManager.savePreset(name, author, "");
+					auto saveSuccess = presetManager.savePreset(name, author, "", errorAlertCallback);
 
 					if (!saveSuccess) {
-						auto errorAlert = new BurgerAlert("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
+						// auto errorAlert = new BurgerAlert("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
 
-						errorAlert->createPresetWarning();
-						errorAlert->enterModalState(true, nullptr, true);
+						// errorAlert->createPresetWarning();
+						// errorAlert->enterModalState(true, nullptr, true);
 					} else {
 						loadPresetList();
 						this->listBoxModel.initFiles();
@@ -456,33 +487,29 @@ private:
 		}
 		if (button == &previousPresetButton)
 		{
-			const auto newPreset = presetManager.loadPreviousPreset();
+			const auto newPreset = presetManager.loadPreviousPreset(errorAlertCallback);
 			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &nextPresetButton)
 		{
-			const auto newPreset = presetManager.loadNextPreset();
+			const auto newPreset = presetManager.loadNextPreset(errorAlertCallback);
 			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &deleteButton)
 		{
-			presetManager.deletePreset(presetManager.getCurrentPreset());
-			loadPresetList();
-
 			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
 			alertWindow2->createPresetDeleteAlert();
 			alertWindow2->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow2](int result)
 																					{
 				if (result == 1)
 				{
-					presetManager.deletePreset(presetManager.getCurrentPreset());
+					presetManager.deletePreset(presetManager.getCurrentPreset(), errorAlertCallback);
 					loadPresetList();
 					this->listBoxModel.initFiles(true);
 					this->listBox.repaint();
 				}
 
-				delete alertWindow2;
-			}));
+				delete alertWindow2; }));
 		}
 	}
 
@@ -503,27 +530,24 @@ private:
 
 	void loadPresetList()
 	{
-
 		const auto allPresets = presetManager.getAllPresets();
-		const auto currentPreset = presetManager.getCurrentPreset();
 
 		juce::StringArray presets;
 		for (auto &file : allPresets)
 		{
 			presets.add(file.getFileNameWithoutExtension());
 		}
-
-		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	Preset::PresetManager &presetManager;
-	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton;
+	Preset::PresetManager &
+		presetManager;
+	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
 
 	bool showPresetsList = false;
 
 	TextButton currentPresetLabel;
 
-	ComboBoxLookAndFeel comboBoxLAF;
+	HamburgerLAF comboBoxLAF;
 
 	CustomPresetListBox listBox;
 	CustomListBoxModel listBoxModel;

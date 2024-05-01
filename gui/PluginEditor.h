@@ -15,10 +15,9 @@
 
 #include "PresetPanel.h"
 
+#include "LookAndFeel/HamburgerLAF.h"
 
-// #include "melatonin_inspector/melatonin_inspector.h"
-
-#define PRESETS_MANAGER_VISIBLE 0
+#define PRESETS_MANAGER_VISIBLE 1
 
 class EditorV2 : public juce::AudioProcessorEditor
 {
@@ -35,11 +34,11 @@ public:
     {
         int additionalHeight = 0;
 
-#if PRESETS_MANAGER_VISIBLE
-        additionalHeight += 45;
-#endif
-
-        setSize(800, 500 + additionalHeight);
+        setLookAndFeel(&hamburgerLAF);
+        infoPanel.setLookAndFeel(&hamburgerLAF);
+        leftColumn.setLookAndFeel(&hamburgerLAF);
+        saturationColumn.setLookAndFeel(&hamburgerLAF);
+        utilColumn.setLookAndFeel(&hamburgerLAF);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
@@ -48,6 +47,7 @@ public:
 
 #if PRESETS_MANAGER_VISIBLE
         addAndMakeVisible(presetPanel);
+        additionalHeight += 45;
 #endif
 
         setOpaque(true);
@@ -55,15 +55,19 @@ public:
         infoPanel.setVisible(false);
 
         setPaintingIsUnclipped(true);
+        
 
-        // // open the inspector window
-        // inspector.setVisible(true);
-
-        // // enable the inspector
-        // inspector.toggle(true);
+        setSize(800, 500 + additionalHeight);
     }
 
-    ~EditorV2() override {}
+    ~EditorV2()
+    {
+        setLookAndFeel(nullptr);
+        infoPanel.setLookAndFeel(nullptr);
+        leftColumn.setLookAndFeel(nullptr);
+        saturationColumn.setLookAndFeel(nullptr);
+        utilColumn.setLookAndFeel(nullptr);
+    }
 
     void paint(juce::Graphics &g) override
     {
@@ -81,7 +85,6 @@ public:
         presetPanel.setBounds(bounds);
         bounds.removeFromTop(45);
 #endif
-
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
 
@@ -126,6 +129,8 @@ private:
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
 
+    HamburgerLAF hamburgerLAF;
+
 #if PRESETS_MANAGER_VISIBLE
     PresetPanel presetPanel;
 #endif
@@ -133,8 +138,6 @@ private:
     Info infoPanel;
 
     juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
-
-    // melatonin::Inspector inspector { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };

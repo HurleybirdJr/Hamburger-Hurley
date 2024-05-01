@@ -4,21 +4,6 @@
 #include <chrono>
 #include <ctime>
 
-#if SENTRY
-#include <sentry.h>
-
-void crashHandler(void *platformSpecificCrashData)
-{
-    auto report = juce::SystemStats::getStackBacktrace();
-
-    sentry_value_t event = sentry_value_new_event();
-    sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
-    sentry_capture_event(event);
-
-    sentry_shutdown();
-}
-
-#endif
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
@@ -31,13 +16,11 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          distortionTypeSelection(treeState),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
-                                                         emphasisHighFreqSmooth(treeState, ParamIDs::emphasisHighFreq),
-                                                         emphasisLowFreqSmooth(treeState, ParamIDs::emphasisLowFreq),
-                                                         emphasisHighSmooth(treeState, ParamIDs::emphasisHighGain),
-                                                         emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain)
+                                                         emphasisFilter(treeState)
 {
 
     // sentry.io crash reporting
+#if SENTRY
 
     auto pluginWithVersion = juce::String(JucePlugin_Name);
 
@@ -45,7 +28,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     pluginWithVersion.append(JucePlugin_VersionString, 10);
 
     auto logsPath = juce::File::getSpecialLocation(
-                        juce::File::SpecialLocationType::commonDocumentsDirectory)
+                        juce::File::SpecialLocationType::userDocumentsDirectory)
                         .getChildFile(JucePlugin_Manufacturer)
                         .getChildFile(JucePlugin_Name)
                         .getChildFile("./logs/");
@@ -55,17 +38,21 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
         const auto result = logsPath.createDirectory();
         if (result.failed())
         {
-            DBG("Could not create preset directory: " + result.getErrorMessage());
+            DBG("Could not create logs directory: " + result.getErrorMessage());
             jassertfalse;
         }
     }
 
-#if SENTRY
+    options = sentry_options_new();
 
-    sentry_options_t *options = sentry_options_new();
+#if JUCE_DEBUG
+    sentry_options_set_debug(options, true);
+#else
     sentry_options_set_debug(options, false);
-    sentry_options_set_dsn(options, juce::String(SENTRY_URL).toRawUTF8());
-    sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
+#endif
+
+    sentry_options_set_dsn(options, juce::String(SENTRY_REPORTING_URL).toRawUTF8());
+    // sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_release(options, pluginWithVersion.toRawUTF8());
 
@@ -113,7 +100,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     // /* message */ "It works!"
     // ));
 
-    juce::SystemStats::setApplicationCrashHandler(crashHandler);
+    // juce::SystemStats::setApplicationCrashHandler(createSentryLogger);
 
 #endif
 
@@ -135,9 +122,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
     jassert(clipEnabled);
 
-    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::emphasisOn.getParamID()));
-    jassert(enableEmphasis);
-
     presetManager = std::make_unique<Preset::PresetManager>(treeState);
 
 #if PERFETTO
@@ -149,6 +133,10 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
+#endif
+
+#if SENTRY
+    sentry_shutdown();
 #endif
 }
 
@@ -178,9 +166,10 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tubeTone, "Tube Tone", makeRange(0.0f, 1.0f), 1.0f));
 
     // phase
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseAmount, "Phase Saturation", makeRange(0.0f, 100.0f), 0.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistTone, "Phase Distortion Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistNormalise, "Phase Normalisation", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseAmount, "Phase Distortion", makeRange(0.0f, 100.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistTone, "Phase Dist Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistStereo, "Phase Dist Stereo", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseRectify, "Phase Dist Rectify", makeRange(0.0f, 1.0f), 0.f));
 
     // rubidium
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumAmount, "Rubidium Saturation", makeRange(0.0f, 100.0f), 5.f));
@@ -197,7 +186,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix6, "Matrix #6", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix7, "Matrix #7", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix8, "Matrix #8", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix9, "Matrix #9", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix9, "Matrix #9", makeRange(0.0f, 1.0f), 1.f));
 
     // categorical
     params.add(std::make_unique<AudioParameterChoice>(ParamIDs::primaryDistortionType, "Distortion Type", ParamIDs::distortion.categories, 0));
@@ -296,59 +285,27 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     inputGain.prepare(spec);
     outputGain.prepare(spec);
-    emphasisCompensationGain.prepare(spec);
 
-    // Initialize the filter
-    for (int channel = 0; channel < 2; channel++)
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            *peakFilterBefore[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-            *peakFilterAfter[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-
-            peakFilterBefore[i][channel].prepare(spec);
-            peakFilterAfter[i][channel].prepare(spec);
-        }
-    }
-
-    emphasisLowSmooth.prepare(spec);
-    emphasisHighSmooth.prepare(spec);
-    emphasisLowFreqSmooth.prepare(spec);
-    emphasisHighFreqSmooth.prepare(spec);
-
-    emphasisLowBuffer.reserve(spec.maximumBlockSize);
-    emphasisHighBuffer.reserve(spec.maximumBlockSize);
-    emphasisLowFreqBuffer.reserve(spec.maximumBlockSize);
-    emphasisHighFreqBuffer.reserve(spec.maximumBlockSize);
-
-    for (int i = 0; i < spec.maximumBlockSize; i++)
-    {
-        emphasisLowBuffer.push_back(0.0f);
-        emphasisHighBuffer.push_back(0.0f);
-        emphasisLowFreqBuffer.push_back(0.0f);
-        emphasisHighFreqBuffer.push_back(0.0f);
-    }
 
     oversamplingStack.setOversamplingFactor(hq->get());
     oversamplingStack.prepare(spec);
-    oversamplingStackPost.setOversamplingFactor(hq->get());
-    oversamplingStackPost.prepare(spec);
 
     juce::dsp::ProcessSpec oversampledSpec;
     oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
-    oversampledSpec.maximumBlockSize = samplesPerBlock;
+    oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
+    emphasisFilter.prepare(oversampledSpec);
     distortionTypeSelection.prepare(oversampledSpec);
     postClip.prepare(oversampledSpec);
+    preDistortionSelection.prepare(oversampledSpec);
+    noiseDistortionSelection.prepare(oversampledSpec);
+    dynamics.prepare(oversampledSpec);
 
-    preDistortionSelection.prepare(spec);
-    noiseDistortionSelection.prepare(spec);
+    float totalLatency = oversamplingStack.getLatencySamples();
 
-    dynamics.prepare(spec);
-
-    float totalLatency = oversamplingStack.getLatencySamples() + oversamplingStackPost.getLatencySamples();
     DBG("Total Latency: " << totalLatency);
+
     setLatencySamples((int)std::ceil(totalLatency));
 
     dryWetMixer.reset();
@@ -364,10 +321,6 @@ void AudioPluginAudioProcessor::releaseResources()
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
@@ -385,7 +338,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
-    // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
     {
         TRACE_EVENT("dsp", "oversampling config");
 
@@ -414,183 +366,50 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
-
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
 
-    TRACE_EVENT_END("dsp");
-    // dry/wet
-
-    // input gain
-    // Some computation here
     auto gainAmount = inputGainKnob->get();
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
-    // xsimd::dispatch(SIMDGain::process{})(block, juce::Decibels::decibelsToGain(gainAmount));
-
     dryWetMixer.pushDrySamples(block);
 
-    float prevEmphasis[2] = {0.f, 0.f};
-    float prevFrequencies[2] = {62.0f, 9000.0f};
+    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
-    bool updateLowCoefficients = false;
-    bool updateHighCoefficients = false;
+    emphasisFilter.processBefore(oversampledBlock);
 
-    bool emphasisOn = enableEmphasis->get();
-
-    emphasisLowSmooth.update();
-    emphasisHighSmooth.update();
-    emphasisLowFreqSmooth.update();
-    emphasisHighFreqSmooth.update();
-
-    if (emphasisOn)
-    {
-        TRACE_EVENT("dsp", "emphasis EQ before");
-
-        for (int i = 0; i < block.getNumSamples(); i++)
-        {
-            emphasisLowBuffer[i] = emphasisLowSmooth.get();
-            emphasisHighBuffer[i] = emphasisHighSmooth.get();
-            emphasisLowFreqBuffer[i] = emphasisLowFreqSmooth.get();
-            emphasisHighFreqBuffer[i] = emphasisHighFreqSmooth.get();
-        }
-
-        prevEmphasis[0] = emphasisLowBuffer[0];
-        prevEmphasis[1] = emphasisHighBuffer[0];
-        prevFrequencies[0] = emphasisLowFreqBuffer[0];
-        prevFrequencies[1] = emphasisHighFreqBuffer[0];
-
-        // figure out if coefficients need updating
-
-        double sRate = getSampleRate();
-
-        for (int channel = 0; channel < block.getNumChannels(); channel++)
-        {
-            for (int sample = 0; sample < block.getNumSamples(); sample++)
-            {
-                float nextEmphasisLow = emphasisLowBuffer[sample];
-                float nextEmphasisHigh = emphasisHighBuffer[sample];
-                float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
-                float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
-
-                switch (channel)
-                {
-                case 0:
-                {
-                    auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
-                    auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
-
-                    *peakFilterBefore[1][channel].coefficients = highCoeffs;
-                    *peakFilterBefore[0][channel].coefficients = lowCoeffs;
-
-                    break;
-                }
-                case 1:
-                {
-                    peakFilterBefore[1][1].coefficients = peakFilterBefore[1][0].coefficients;
-                    peakFilterBefore[0][1].coefficients = peakFilterBefore[0][0].coefficients;
-
-                    break;
-                }
-                }
-
-                auto interm = peakFilterBefore[0][channel].processSample(block.getSample(channel, sample));
-                block.setSample(channel, sample, peakFilterBefore[1][channel].processSample(interm));
-            }
-        }
-    }
-
-    peakFilterBefore[0][0].snapToZero();
-    peakFilterBefore[1][0].snapToZero();
-    peakFilterBefore[0][1].snapToZero();
-    peakFilterBefore[1][1].snapToZero();
-    peakFilterAfter[0][0].snapToZero();
-    peakFilterAfter[1][0].snapToZero();
-    peakFilterAfter[0][1].snapToZero();
-    peakFilterAfter[1][1].snapToZero();
-
-    // companding
     {
         TRACE_EVENT("dsp", "companding");
-        dynamics.processBlock(block);
+        dynamics.processBlock(oversampledBlock);
     }
 
     {
         TRACE_EVENT("dsp", "noise distortion");
-        noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
+        noiseDistortionSelection.processBlock(oversampledBlock);
     }
 
     {
         TRACE_EVENT("dsp", "pre distortion");
-        preDistortionSelection.processBlock(block);
+        preDistortionSelection.processBlock(oversampledBlock);
     }
-
-    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     {
         TRACE_EVENT("dsp", "primary distortion");
         distortionTypeSelection.processBlock(oversampledBlock);
     }
 
-    oversamplingStack.processSamplesDown(block);
-
-    if (emphasisOn)
-    {
-        double sRate = getSampleRate();
-
-        for (int channel = 0; channel < block.getNumChannels(); channel++)
-        {
-            for (int sample = 0; sample < block.getNumSamples(); sample++)
-            {
-                float nextEmphasisLow = emphasisLowBuffer[sample];
-                float nextEmphasisHigh = emphasisHighBuffer[sample];
-                float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
-                float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
-
-                switch (channel)
-                {
-                case 0:
-                {
-                    auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
-                    auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
-
-                    *peakFilterAfter[1][0].coefficients = highCoeffs;
-                    *peakFilterAfter[0][0].coefficients = lowCoeffs;
-
-                    break;
-                }
-                case 1:
-                {
-                    peakFilterAfter[1][1].coefficients = peakFilterAfter[1][0].coefficients;
-                    peakFilterAfter[0][1].coefficients = peakFilterAfter[0][0].coefficients;
-
-                    break;
-                }
-                }
-
-                auto interm = peakFilterAfter[0][channel].processSample(block.getSample(channel, sample));
-                block.setSample(channel, sample, peakFilterAfter[1][channel].processSample(interm));
-            }
-        }
-    }
+    emphasisFilter.processAfter(oversampledBlock);
 
     {
         TRACE_EVENT("dsp", "other");
-        // emphasis compensated gain
-        float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.133f;
-        emphasisCompensationGain.setGainDecibels(-eqCompensation);
-        emphasisCompensationGain.process(context);
-
-        dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
         if (clipEnabled->get())
         {
-            postClip.processBlock(oversampledBlock2);
+            postClip.processBlock(oversampledBlock);
         }
-        oversamplingStackPost.processSamplesDown(block);
 
-        // before output gain
+        oversamplingStack.processSamplesDown(block);
+
         scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
         outputGain.setGainDecibels(outputGainKnob->get());
@@ -605,7 +424,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 //==============================================================================
 bool AudioPluginAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor *AudioPluginAudioProcessor::createEditor()

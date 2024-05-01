@@ -2,7 +2,6 @@
 
 #include "../../PluginProcessor.h"
 #include "LightButton.h"
-#include "../LookAndFeel/ComboBoxLookAndFeel.h"
 #include "../Knob.h"
 #include "Panel.h"
 
@@ -108,7 +107,7 @@ public:
     }
 
     std::unique_ptr<LightButton> enabledButton = nullptr;
-    ComboBoxLookAndFeel comboBoxLook;
+    HamburgerLAF comboBoxLook;
     juce::ComboBox categorySelector;
 
 private:

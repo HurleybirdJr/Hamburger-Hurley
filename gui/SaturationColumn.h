@@ -28,6 +28,8 @@ public:
         // todo: add waveshapey distortion effects for distortion type, rename that to classic
         // and add rectification to it?
 
+        setLookAndFeel(&(*getParentComponent()).getLookAndFeel());
+
         classic = std::make_unique<ClassicSatPanel>(p);
         classic->setLookAndFeel(&saturationLAF);
         panels.push_back(std::move(classic));
@@ -75,6 +77,13 @@ public:
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         noise->setLookAndFeel(&knobLAF1);
         addAndMakeVisible(noise.get());
+    }
+
+    ~SaturationColumn() {
+        saturation->setLookAndFeel(nullptr);
+        postClip->setLookAndFeel(nullptr);
+        noise->setLookAndFeel(nullptr);
+
     }
 
     void resized() override{

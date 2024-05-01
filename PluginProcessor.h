@@ -14,15 +14,20 @@
 
 #include "gui/Modules/Scope.h"
 
+#include "dsp/Filtering/EmphasisFilter.h"
+
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
-
-// #include "dsp/ProcessDuplicator.h"
 
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
+
+#if SENTRY
+#include <sentry.h>
+#endif
+
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
@@ -82,14 +87,8 @@ private:
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
     juce::AudioParameterBool *clipEnabled = nullptr;
-    juce::AudioParameterBool *enableEmphasis = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
-
-    juce::AudioParameterFloat *emphasisLow = nullptr;
-    juce::AudioParameterFloat *emphasisHigh = nullptr;
-    juce::AudioParameterFloat *emphasisLowFreq = nullptr;
-    juce::AudioParameterFloat *emphasisHighFreq = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
@@ -99,29 +98,14 @@ private:
     Dynamics dynamics;
     PostClip postClip;
 
-    SmoothParam emphasisLowSmooth;
-    SmoothParam emphasisHighSmooth;
-    SmoothParam emphasisLowFreqSmooth;
-    SmoothParam emphasisHighFreqSmooth;
-
-    std::vector<float> emphasisLowBuffer;
-    std::vector<float> emphasisHighBuffer;
-    std::vector<float> emphasisLowFreqBuffer;
-    std::vector<float> emphasisHighFreqBuffer;
-
-    dsp::IIR::Filter<double> peakFilterBefore[2][2];
-    dsp::IIR::Filter<double> peakFilterAfter[2][2];
-
-    float filterFrequencies[2] = {62.0f, 9000.0f};
+    EmphasisFilter emphasisFilter;
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;
-    dsp::Gain<float> emphasisCompensationGain;
 
     dsp::DryWetMixer<float> dryWetMixer;
 
     OversamplingStack oversamplingStack;
-    OversamplingStack oversamplingStackPost;
 
     int oldOversamplingFactor = 0;
 
@@ -131,10 +115,30 @@ private:
 
     std::unique_ptr<Preset::PresetManager> presetManager;
 
-    #if PERFETTO // if we have the profiling
+    #if PERFETTO
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
-    //==============================================================================
+    #if SENTRY
+
+    static void createSentryLogger(void *platformSpecificCrashData) {
+        auto report = juce::SystemStats::getStackBacktrace();
+
+        sentry_value_t event = sentry_value_new_event();
+        sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
+        sentry_capture_event(event);
+
+        sentry_options_free(AudioPluginAudioProcessor::options);
+        sentry_shutdown();
+    }
+    
+    static sentry_options_t *options;
+
+    #endif
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };
+
+#if SENTRY
+sentry_options_t *AudioPluginAudioProcessor::options = nullptr;
+#endif

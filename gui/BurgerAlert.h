@@ -2,8 +2,6 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 
-#include "LookAndFeel/ComboBoxLookAndFeel.h"
-
 class BurgerAlert : public juce::AlertWindow
 {
 public:
@@ -20,7 +18,11 @@ public:
         setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
         setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
 
-        getTopLevelWindow(0)->setDropShadowEnabled(true);
+        // getTopLevelWindow(0)->setDropShadowEnabled(true);
+    }
+
+    ~BurgerAlert() {
+        setLookAndFeel(nullptr);
     }
 
     void createPresetSaveAlert() {
@@ -35,10 +37,10 @@ public:
 
         presetTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         presetTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        presetTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        // presetTextEditor->setFont(comboBoxLook.getPopupMenuFont());
         authorTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         authorTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        authorTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        // authorTextEditor->setFont(comboBoxLook.getPopupMenuFont());
 
         auto okButton = getButton(0);
         auto cancelButton = getButton(1);
@@ -84,5 +86,5 @@ public:
 
 private:
 
-    ComboBoxLookAndFeel comboBoxLook;
+    HamburgerLAF comboBoxLook;
 };

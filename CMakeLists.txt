@@ -4,15 +4,45 @@ include (FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.4)
+set(ProjectVersion 0.4.1)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 if(APPLE)
-set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
-set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
+    set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+    set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
+
+    # dSYM files for Xcode release builds
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+    set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
+    set(CMAKE_XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)")
+    set(CMAKE_XCODE_ATTRIBUTE_DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT "YES")
+
+    # find_program(DSYMUTIL_PROGRAM dsymutil)
+    # if (DSYMUTIL_PROGRAM)
+    # foreach(lang C CXX)
+    #     foreach(var LINK_EXECUTABLE CREATE_SHARED_LIBRARY)
+    #     set(CMAKE_${lang}_${var} "${CMAKE_${lang}_${var}}" "${DSYMUTIL_PROGRAM} ./Hamburger_artefacts/Release/")
+    #     endforeach()
+    # endforeach()
+    # endif()
+endif()
+
+# pdb files for windows release builds
+if (WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+
+    # because separate targets (vst3 / clap / etc) are built, we do module linker flags and not shared ones
+    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
 project(Hamburger VERSION "${ProjectVersion}")
@@ -53,25 +83,27 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
-set(SENTRY_URL "")
+set(SENTRY_REPORTING_URL "")
 set(SENTRY 0)
 
 # load environment variable for cmake env path
-if(NOT DEFINED ENV{SENTRY_URL}) 
-    message(WARNING "SENTRY_URL not set, falling back to env.cmake")
+if(NOT DEFINED ENV{SENTRY_REPORTING_URL}) 
+    message(WARNING "SENTRY_REPORTING_URL not set, falling back to env.cmake")
 
-    include(env.cmake)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/env.cmake")
+        include(env.cmake)
+    endif()
     
-    if(DEFINED ENV{SENTRY_URL})
-        set(SENTRY_URL "$ENV{SENTRY_URL}")
+    if(DEFINED ENV{SENTRY_REPORTING_URL})
+        set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
         set(SENTRY 1)
         message(STATUS "Ran env.cmake successfully, environment variables should be loaded.")
     else()
         message(WARNING "Unable to load environment variables.")
     endif()
 else()
-    set(SENTRY_URL "$ENV{SENTRY_URL}")
-    message(STATUS "SENTRY_URL has been set successfully")
+    set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
+    message(STATUS "SENTRY_REPORTING_URL has been set successfully")
     set(SENTRY 1)
 endif()
 
@@ -104,10 +136,15 @@ endif()
 
  
 juce_add_plugin("${BaseTargetName}"
-    VERSION "${ProjectVersion}"                             # Set this if the plugin version is different to the project version
+    VERSION "${ProjectVersion}"                 # Set this if the plugin version is different to the project version
+    PRODUCT_NAME "${PluginName}"                # The name of the final executable, which can differ from the target name
+    PLUGIN_MANUFACTURER_CODE Avry               # A four-character manufacturer id with at least one upper-case character
+    PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
+    DESCRIPTION "Hamburger is a distortion plugin, capable of both subtle tangy harmonics and absolute annihilation and noise-wall-ification to any sound."
+                                                # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
-    COMPANY_NAME AviaryAudio                          # Specify the name of the plugin's author
+    COMPANY_NAME "AviaryAudio"                          # Specify the name of the plugin's author
     COMPANY_WEBSITE "https://aviaryaudio.com"
     COMPANY_EMAIL "dave@aviaryaudio.com"
     IS_SYNTH FALSE                       # Is this a synth or an effect?
@@ -115,16 +152,13 @@ juce_add_plugin("${BaseTargetName}"
     NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
     IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
+
     COPY_PLUGIN_AFTER_BUILD TRUE        # Should the plugin be installed to a default location after building?
     VST3_COPY_DIR "${outdir}"
 	VST_COPY_DIR "${outdir}"
 	AU_COPY_DIR "${outdir}"
-    PLUGIN_MANUFACTURER_CODE AVRY               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
-                                                # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS VST3 Standalone AU                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "${PluginName}"  # The name of the final executable, which can differ from the target name
-    VST3_CATEGORIES Fx Distortion Fx Dynamics 
+    VST3_CATEGORIES Fx Distortion Dynamics
 )
 
 # add_custom_command(
@@ -165,7 +199,7 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_WEB_BROWSER=0
 	JUCE_USE_WIN_WEBVIEW2=0
 	JUCE_USE_CAMERA=0
-    SENTRY_URL="${SENTRY_URL}"
+    SENTRY_REPORTING_URL="${SENTRY_REPORTING_URL}"
     GIT_HASH="${GIT_HASH}"
     SENTRY=${SENTRY}
 )

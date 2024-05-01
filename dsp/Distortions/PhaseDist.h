@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../SmoothParam.h"
-#include "WaveShapers.h"
+#include "../WaveShapers.h"
 #include "../../utils/Params.h"
 
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -21,9 +21,11 @@ public:
 private:
     SmoothParam amount;
     SmoothParam tone;
-    SmoothParam normalise;
+    SmoothParam stereo;
+    SmoothParam rectify;
 
     float sampleRate;
+    float sampleRateMult;
 
     // delay line for phase distortion effect
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
